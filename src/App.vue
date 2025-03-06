@@ -1,15 +1,10 @@
 <template>
-  <HomeMap />
+  <router-view />
 </template>
 
 <script>
-import HomeMap from './components/HomeMap.vue'
-
 export default {
-  name: 'App',
-  components: {
-    HomeMap
-  }
+  name: 'App'
 }
 </script>
 

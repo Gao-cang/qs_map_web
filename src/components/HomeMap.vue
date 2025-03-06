@@ -6,12 +6,13 @@
         <!-- 左侧标签页 -->
         <div class="nav-tabs">
           <div class="tab active">污染地图</div>
-          <div class="tab">污染统计</div>
+          <div class="tab" @click="goToPlot">污染统计</div>
+          <div class="tab" @click="goToDataAdding">数据添加</div>
         </div>
         <!-- 中间标题 -->
         <div class="nav-title">青山工业区多介质污染综合管理网站</div>
         <!-- 右侧用户信息 -->
-        <div class="user-info" @click="toggleUserMenu">
+        <div class="user-info" @click="handleUserClick">
           <span>请登录</span>
           <!-- 用户下拉菜单 -->
           <div class="user-dropdown" v-if="showUserMenu">
@@ -88,22 +89,49 @@ export default {
       this.initMap();
     });
   },
+  // 将 beforeDestroy 改为 beforeUnmount
+  beforeUnmount() {
+    // 销毁地图实例
+    if (this.map) {
+      this.map.destroy();
+      this.map = null;
+    }
+    // 清除标记点数组
+    this.markers = [];
+    // 移除全局方法
+    window.addNewPollutionInfo = null;
+    // 清除信息窗体
+    if (this.estimationInfoWindow) {
+      this.estimationInfoWindow.close();
+      this.estimationInfoWindow = null;
+    }
+  },
   methods: {
     async initMap() {
       try {
+        // 如果已经存在地图实例，先销毁它
+        if (this.map) {
+          this.map.destroy();
+          this.map = null;
+          this.markers = [];
+        }
+        
         // 配置安全密钥
         window._AMapSecurityConfig = {
           securityJsCode: 'baad3e3aad81d6d40a5ce47752a842fb',
         };
 
-        await new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://webapi.amap.com/loader.js';
-          script.async = true;
-          script.onload = resolve;
-          script.onerror = reject;
-          document.head.appendChild(script);
-        });
+        // 检查是否已经加载了AMap脚本
+        if (!window.AMapLoader) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://webapi.amap.com/loader.js';
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        }
 
         if (window.AMapLoader) {
           // 将 AMap 保存到组件实例中
@@ -250,12 +278,24 @@ export default {
     
       // 添加新增估算信息事件监听器
       div.addEventListener('add-estimation', () => {
-        console.log('添加新的估算信息', position);
+        console.log('添加新的污染信息', position);
         // TODO: 实现添加新估算信息的逻辑
       });
     
       return div;
     },
+    // 添加处理用户点击的方法
+    handleUserClick() {
+      // 使用 Vue Router 进行页面跳转
+      this.$router.push('/login');
+    },
+    goToDataAdding() {
+      this.$router.push('/data-adding');
+    },
+    // 添加跳转到统计页面的方法
+    goToPlot() {
+      this.$router.push('/plot');
+    }
   }
 }
 </script>
@@ -280,7 +320,16 @@ export default {
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   z-index: 100;
 }
-
+.user-info {
+  cursor: pointer;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+.user-info:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
 .amap-container {
   position: absolute;
   top: 0px; /* 对应导航栏固定高度 */

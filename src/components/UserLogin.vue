@@ -77,6 +77,11 @@
           <button type="submit" class="login-button" :disabled="isLoading">
             {{ isLoading ? '登录中...' : '登录' }}
           </button>
+          
+          <!-- 添加注册入口 -->
+          <div class="register-tip">
+            没有账号？<span class="register-link" @click="goToRegister">点此注册新账号</span>
+          </div>
         </form>
       </div>
     </div>
@@ -175,6 +180,9 @@ export default {
     goBack() {
       this.$router.push('/home')
     },
+    goToRegister() {
+      this.$router.push('/register')
+    }
   }
 }
 </script>
@@ -197,174 +205,146 @@ export default {
 }
 .login-container {
   display: flex;
-  width: 100%;
-  height: 100vh;
+  width: 80%;  /* 修改为80%宽度 */
+  height: 80vh;  /* 修改为80%高度 */
   background-color: #f5f5f5;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
-
 .login-form-section {
   flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px;
+  padding: 5%;
+  background-color: white;
 }
 
+/* 修改右侧展示区域样式 */
+.login-display-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #2C7873;
+  padding: 5%;
+}
+.display-content {
+  text-align: center;
+  color: white;
+  width: 90%;
+}
+.display-content h1 {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+  font-weight: 500;
+}
+.display-content p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  line-height: 1.6;
+}
 .login-box {
-  width: 400px;
+  width: 90%;
+  max-width: 380px;
   background: white;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  padding: 5% 8%;
+  border-radius: 1rem;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.05);
 }
-
 .login-tabs {
   display: flex;
-  margin-bottom: 30px;
+  margin-bottom: 8%;
   border-bottom: 2px solid #eee;
 }
-
 .tab {
   flex: 1;
   text-align: center;
-  padding: 12px;
+  padding: 3% 0;
   cursor: pointer;
   color: #666;
+  font-size: 1rem;
   transition: all 0.3s ease;
-}
-
-.tab.active {
-  color: #2C7873;
-  border-bottom: 2px solid #2C7873;
-}
-
-.form-item {
-  margin-bottom: 20px;
-}
-
-.form-item input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-}
-
-.form-item input:focus {
-  border-color: #2C7873;
-  outline: none;
-}
-
-.form-item input.error {
-  border-color: #ff4d4f;
-}
-
-.error-message {
-  color: #ff4d4f;
-  font-size: 12px;
-  margin-top: 4px;
-  display: block;
-}
-
-.password-input {
   position: relative;
 }
-
-.password-toggle {
+.tab.active {
+  color: #2C7873;
+  font-weight: 500;
+}
+.tab.active::after {
+  content: '';
   position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #2C7873;
+}
+.login-form {
+  width: 100%;
+}
+.form-item {
+  margin-bottom: 6%;
+  width: 100%;
+}
+.form-item input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  background-color: #f8f8f8;
+}
+.form-item input:focus {
+  border-color: #2C7873;
+  background-color: white;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(44, 120, 115, 0.1);
+}
+.login-button {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: #2C7873;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  width: 20px;
-  height: 20px;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23666"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>') center/contain no-repeat;
+  transition: all 0.3s ease;
+  margin-top: 3%;
 }
-
-.password-toggle.visible {
-  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23666"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>');
-}
-
 .form-options {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin: 5% 0;
+  width: 100%;
 }
-
 .remember-me {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+.register-tip {
+  text-align: center;
+  margin-top: 8%;
+  font-size: 0.9rem;
   color: #666;
 }
-
-.forget-password {
-  color: #2C7873;
-  text-decoration: none;
-}
-
-.forget-password:hover {
-  text-decoration: underline;
-}
-
-.login-button {
-  width: 100%;
-  padding: 12px;
-  background-color: #2C7873;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.login-button:hover {
-  background-color: #52958B;
-}
-
-.login-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.login-display-section {
-  flex: 1;
-  background: linear-gradient(135deg, #2C7873, #52958B); /* 添加渐变背景替代图片 */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px;
-}
-
-.display-content {
-  text-align: center;
-  color: white;
-}
-
-.display-content h1 {
-  font-size: 28px;
-  margin-bottom: 16px;
-}
-
-.display-content p {
-  font-size: 16px;
-  opacity: 0.8;
-  margin-bottom: 40px;
-}
-
-.display-image {
-  max-width: 80%;
-  height: auto;
-}
-
-@media (max-width: 1024px) {
-  .login-container {
-    flex-direction: column;
-  }
-  
-  .login-display-section {
-    display: none;
-  }
+.error-message {
+  color: #ff4d4f;
+  font-size: 0.8rem;
+  margin-top: 2%;
+  display: block;
 }
 </style>

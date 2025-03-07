@@ -3,6 +3,7 @@ import HomeMap from '../components/HomeMap.vue'
 import UserLogin from '../components/UserLogin.vue'
 import PollutionPlot from '../components/PollutionPlot.vue'  // 添加导入
 import DataAdding from '@/components/DataAdding.vue'
+import UserRegister from '../components/UserRegister.vue'
 
 const routes = [
   {
@@ -31,6 +32,11 @@ const routes = [
     path: '/data-adding',
     name: 'DataAdding',
     component: DataAdding
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: UserRegister
   },
 ]
 

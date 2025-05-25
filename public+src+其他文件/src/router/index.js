@@ -4,8 +4,6 @@ import UserLogin from '../components/UserLogin.vue'
 import PollutionPlot from '../components/PollutionPlot.vue'  // 添加导入
 import DataAdding from '@/components/DataAdding.vue'
 import UserRegister from '../components/UserRegister.vue'
-import DataManage from '../components/DataManage.vue'
-
 
 const routes = [
   {
@@ -34,11 +32,6 @@ const routes = [
     path: '/data-adding',
     name: 'DataAdding',
     component: DataAdding
-  },
-  {
-    path: '/DataManage',
-    name: 'DataManage',
-    component: DataManage
   },
   {
     path: '/register',

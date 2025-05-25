@@ -8,7 +8,6 @@
           <div class="tab" @click="goToHome">污染地图</div>
           <div class="tab" @click="goToPlot">污染统计</div>
           <div class="tab active">数据添加</div>
-          <div class="tab" @click="goToDataMng">数据管理</div>
         </div>
         <!-- 中间标题 -->
         <div class="nav-title">青山工业区多介质污染综合管理网站</div>
@@ -286,9 +285,6 @@ export default {
     },
     handleUserClick() {
       this.$router.push('/login');
-    },
-    goToDataMng() {
-      this.$router.push('/DataManage');
     }
   }
 }

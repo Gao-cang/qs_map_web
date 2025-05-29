@@ -1,9 +1,5 @@
 <template>
   <div class="login-container">
-    <!-- 添加返回按钮 -->
-    <div class="back-button" @click="goBack">
-      <span>&larr; 返回主页</span>
-    </div>
     <!-- 左侧登录表单 -->
     <div class="login-form-section">
       <div class="login-box">

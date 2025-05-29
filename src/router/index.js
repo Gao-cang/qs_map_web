@@ -10,7 +10,7 @@ import DataManage from '../components/DataManage.vue'
 const routes = [
   {
     path: '/',
-    redirect: '/home'
+    redirect: '/login'
   },
   {
     path: '/login',

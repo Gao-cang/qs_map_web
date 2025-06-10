@@ -155,26 +155,47 @@ export default {
 
       this.isLoading = true
       try {
-        // 模拟登录请求
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        
-        // TODO: 实现实际的登录逻辑
-        console.log('登录信息：', {
-          type: this.loginType,
-          ...this.formData
-        })
+        // 构造请求参数
+        const payload = {
+          phone: this.formData.phone,
+          password: this.formData.password
+          
+        };
+        if (this.loginType === 'admin') {
+          payload.adminToken = this.formData.adminToken;
+        }
 
-        // 登录成功后的处理
-        this.$router.push('/home')
+        // TODO: 替换为实际的后端API调用
+        // 假设您使用axios库进行API请求
+        // import axios from 'axios'; // 需要在script顶部导入
+        // const response = await axios.post('/api/login', payload);
+
+        // 模拟后端响应 - 请替换为实际的API调用和响应处理
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 模拟网络延迟
+        const response = { data: { success: true, message: '登录成功' } }; // 模拟成功响应
+        // const response = { data: { success: false, message: '手机号或密码错误' } }; // 模拟失败响应
+
+        if (response.data.success) {
+          console.log('登录成功：', response.data.message);
+          // 登录成功后的处理，例如保存token，然后跳转
+          // localStorage.setItem('userToken', response.data.token); // 假设后端返回token
+          this.$router.push('/home');
+        } else {
+          // 登录失败，显示错误信息
+          console.error('登录失败：', response.data.message);
+          // 可以在界面上显示错误提示，例如:
+          // this.loginError = response.data.message;
+          alert(response.data.message); // 简单起见，使用alert
+        }
+
       } catch (error) {
-        console.error('登录失败：', error)
+        console.error('登录请求失败：', error);
+        // 处理网络错误或其他请求错误
+        // this.loginError = '登录请求失败，请稍后再试';
+        alert('登录请求失败，请稍后再试'); // 简单起见，使用alert
       } finally {
         this.isLoading = false
       }
-    },
-    // 添加返回方法
-    goBack() {
-      this.$router.push('/home')
     },
     goToRegister() {
       this.$router.push('/register')

@@ -35,30 +35,55 @@
         <div class="form-group">
           <label>点位名称</label>
           <input type="text" v-model="formData.name" placeholder="请输入点位名称">
-        </div>
+        </div> <!--点位名称-->
         
         <div class="form-group">
           <label>经度</label>
           <input type="number" v-model="formData.longitude" placeholder="请输入经度" @input="updateMapPosition">
-        </div>
+        </div> <!--经度-->
         
         <div class="form-group">
           <label>纬度</label>
           <input type="number" v-model="formData.latitude" placeholder="请输入纬度" @input="updateMapPosition">
-        </div>
+        </div> <!--纬度-->
+
+        <!-- <div class="form-group">
+          <label>采样日期</label>
+          <input type="date" v-model="formData.samplingDate">
+        </div> 采样日期 -->
+
         <!-- 替换原有的污染类型和污染值输入部分 -->
         <div class="form-group">
           <label>污染类型</label>
           <select v-model="selectedPollutantType">
-            <option value="air">空气污染物</option>
-            <option value="heavyMetal">重金属污染物</option>
+            <option value="soil">土壤采样</option>
+            <option value="vegetable">蔬菜采样</option>
+            <option value="air">空气采样</option>
           </select>
         </div>
         
         <div class="pollutant-container">
-          <template v-if="selectedPollutantType === 'air'">
+          <template v-if="selectedPollutantType === 'soil'">
             <div class="pollutant-grid">
-              <div class="pollutant-item" v-for="item in airPollutants" :key="item.key">
+              <div class="pollutant-item" v-for="item in soilPollutants" :key="item.key">
+                <label>{{ item.label }}</label>
+                <div class="input-with-unit">
+                  <input 
+                    type="number" 
+                    v-model="formData.pollutants[item.key]" 
+                    :placeholder="item.label"
+                    min="0"
+                    step="0.01"
+                  >
+                  <span class="unit">{{ item.unit }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <template v-else-if="selectedPollutantType === 'vegetable'">
+            <div class="pollutant-grid">
+              <div class="pollutant-item" v-for="item in vegetablePollutants" :key="item.key">
                 <label>{{ item.label }}</label>
                 <div class="input-with-unit">
                   <input 
@@ -76,7 +101,7 @@
           
           <template v-else>
             <div class="pollutant-grid">
-              <div class="pollutant-item" v-for="item in heavyMetalPollutants" :key="item.key">
+              <div class="pollutant-item" v-for="item in airPollutants" :key="item.key">
                 <label>{{ item.label }}</label>
                 <div class="input-with-unit">
                   <input 
@@ -92,6 +117,7 @@
             </div>
           </template>
         </div>
+
         <div class="form-group">
           <label>备注信息</label>
           <textarea v-model="formData.remarks" placeholder="请输入备注信息"></textarea>
@@ -102,17 +128,20 @@
           <button class="cancel-btn" @click="goToHome">取消</button>
         </div>
       </div>
-      
+
       <!-- 右侧地图区域 -->
       <div class="map-panel">
         <div id="data-map" class="data-map"></div>
         <div class="map-tip">提示：点击地图可自动填充经纬度信息</div>
       </div>
     </div>
+  
   </div>
 </template>
 
 <script>
+import axios from 'axios'; // 导入 axios
+
 export default {
   name: 'DataAdding',
   data() {
@@ -121,37 +150,57 @@ export default {
       map: null,
       AMap: null,
       marker: null,
-      selectedPollutantType: 'air',
+      selectedPollutantType: 'soil',
+      // Pb、Cu、Zn、Cd、Cr、As、AP、HN、AS、K
+      soilPollutants:  [
+        { key: 'pb', label: '铅(Pb)', unit: 'mg/kg' },
+        { key: 'cu', label: '铜(Cu)', unit: 'mg/kg' },
+        { key: 'zn', label: '锌(Zn)', unit:'mg/kg' },
+        { key: 'cd', label: '镉(Cd)', unit:'mg/kg' },
+        { key: 'cr', label: '铬(Cr)', unit:'mg/kg' },
+        { key: 'ars', label: '砷(As)', unit:'mg/kg' },
+        { key: 'ap', label: '有效磷(P)', unit: 'mg/kg' },
+        { key: 'hn', label: '碱化氮(N)', unit: 'mg/kg' },
+        { key: 'avs', label: '有效硫(S)', unit: 'mg/kg' },
+        { key: 'k', label: '钾(K)', unit: 'mg/kg' }
+      ],
+      vegetablePollutants:  [
+      { key: 'pb', label: '铅(Pb)', unit: 'mg/kg' },
+        { key: 'cu', label: '铜(Cu)', unit: 'mg/kg' },
+        { key: 'zn', label: '锌(Zn)', unit:'mg/kg' },
+        { key: 'cd', label: '镉(Cd)', unit:'mg/kg' },
+        { key: 'cr', label: '铬(Cr)', unit:'mg/kg' },
+        { key: 'ars', label: '砷(As)', unit:'mg/kg' },
+        { key: 'ap', label: '有效磷(P)', unit: 'mg/kg' },
+        { key: 'hn', label: '碱化氮(N)', unit: 'mg/kg' },
+        { key: 'avs', label: '有效硫(S)', unit: 'mg/kg' },
+        { key: 'k', label: '钾(K)', unit: 'mg/kg' }
+      ],
       airPollutants: [
         { key: 'pm25', label: 'PM2.5', unit: 'μg/m³' },
         { key: 'pm10', label: 'PM10', unit: 'μg/m³' },
-        { key: 'so2', label: 'SO₂', unit: 'μg/m³' },
-        { key: 'nox', label: 'NOx', unit: 'ppb' },
-        { key: 'co', label: 'CO', unit: 'ppm' },
-        { key: 'o3', label: 'O₃', unit: 'ppb' }
-      ],
-      heavyMetalPollutants: [
-        { key: 'cr', label: '铬(Cr)', unit: 'mg/kg' },
-        { key: 'ni', label: '镍(Ni)', unit: 'mg/kg' },
-        { key: 'as', label: '砷(As)', unit: 'mg/kg' },
-        { key: 'pb', label: '铅(Pb)', unit: 'mg/kg' },
-        { key: 'zn', label: '锌(Zn)', unit: 'mg/kg' },
-        { key: 'cu', label: '铜(Cu)', unit: 'mg/kg' },
-        { key: 'cd', label: '镉(Cd)', unit: 'mg/kg' }
       ],
       formData: {
         name: '',
         longitude: this.$route.query.lng || '',
         latitude: this.$route.query.lat || '',
-        pollutionType: 'air',
+        // samplingDate: '', // 添加采样日期字段
+        pollutionType: 'soil',
         pollutants: {},
         remarks: ''
       }
     }
   },
+  watch: {
+    selectedPollutantType(newType) {
+      this.formData.pollutionType = newType; // 同步 pollutionType
+      this.formData.pollutants = {}; //切换类型时清空污染物数据
+    }
+  },
   computed: {
     hasValidPollutantInput() {
-      return Object.values(this.formData.pollutants).some(value => value > 0);
+      // 检查 pollutants 对象中是否有任何一个值大于0
+      return Object.values(this.formData.pollutants).some(value => value && parseFloat(value) > 0);
     }
   },
   mounted() {
@@ -199,7 +248,7 @@ export default {
           // 使用组件实例中的 AMap
           this.map = new this.AMap.Map('data-map', {
             zoom: 13,
-            center: [this.formData.longitude || 114.311855, this.formData.latitude || 30.608737],
+            center: [this.formData.longitude || 114.4240, this.formData.latitude || 30.6090],
             viewMode: '2D',
             lang: 'zh_cn',
           });
@@ -226,6 +275,7 @@ export default {
         console.error('地图初始化失败:', error);
       }
     },
+
     addMarker(position) {
       // 如果已有标记，先移除
       if (this.marker) {
@@ -251,6 +301,7 @@ export default {
       // 将地图中心移动到标记位置
       this.map.setCenter(position);
     },
+
     updateMapPosition() {
       if (this.formData.longitude && this.formData.latitude && this.map) {
         const position = [this.formData.longitude, this.formData.latitude];
@@ -258,7 +309,7 @@ export default {
       }
     },
 
-    submitData() {
+    async submitData() {
       if (!this.formData.name) {
         alert('请输入点位名称');
         return;
@@ -267,17 +318,66 @@ export default {
         alert('请输入经纬度信息');
         return;
       }
+      // if (!this.formData.samplingDate) {
+      //   alert('请选择采样日期');
+      //   return;
+      // }
       if (!this.hasValidPollutantInput) {
-        alert('请至少输入一个污染物的值');
+        alert('请至少输入一个有效的污染物值（大于0）');
         return;
       }
+
+      // 构建提交到后端的数据 payload
+      const payload = {
+        stationName: this.formData.name,
+        longitude: parseFloat(this.formData.longitude),
+        latitude: parseFloat(this.formData.latitude),
+        // time: this.formData.samplingDate, // API 要求 YYYY-MM-DD HH:mm:ss，但input[type=date]只提供 YYYY-MM-DD
+                                        // 后端可能需要调整或前端补充时间部分，此处按api.md中示例格式提交
+        pollutionType: this.selectedPollutantType, // 使用 selectedPollutantType 作为污染类型
+        remarks: this.formData.remarks, // 添加备注信息
+        pollutants: {} // 初始化为空对象
+      };
+
+      // 根据污染类型动态添加污染物数据
+      // 直接遍历 formData.pollutants 对象
+      for (const key in this.formData.pollutants) {
+        if (Object.hasOwnProperty.call(this.formData.pollutants, key)) {
+          const valueString = this.formData.pollutants[key];
+          // 确保值存在且不为空字符串再进行转换
+          if (valueString !== null && valueString !== undefined && valueString !== '') {
+            const value = parseFloat(valueString);
+            // 后端可能期望即使是0也传递，或者只传递大于0的值，根据API调整
+            // 此处我们传递所有输入的值，如果值为NaN（无法转换的字符串），则设为0或null，根据后端要求
+            payload.pollutants[key] = isNaN(value) ? 0 : value; 
+          } else {
+            // 如果输入为空或不存在，可以根据后端要求设置为0或忽略该字段
+            payload.pollutants[key] = 0; // 或者 delete payload.pollutants[key];
+          }
+        }
+      }
       
-      // TODO: 实现数据提交逻辑
-      console.log('提交的数据:', this.formData);
-      
-      alert('数据提交成功！');
-      this.goToHome();
+      console.log('提交的数据:', payload); 
+
+      try {
+
+        const response = await axios.post('/api/pollution/DataAdd', payload);
+        if (response.data && response.data.code === 200) {
+          alert('数据提交成功！' + (response.data.msg || ''));
+          // this.goToHome(); // 提交成功后跳转到首页
+        } else {
+          alert('数据提交失败：' + (response.data.msg || '未知错误'));
+        }
+      } catch (error) {
+        console.error('提交数据时发生错误:', error);
+        let errorMessage = '提交数据时发生网络错误或服务器无响应';
+        if (error.response && error.response.data && error.response.data.msg) {
+          errorMessage = `数据提交失败：${error.response.data.msg}`;
+        }
+        alert(errorMessage);
+      }
     },
+    
     goToHome() {
       this.$router.push('/');
     },
@@ -516,12 +616,17 @@ textarea {
 }
 
 .submit-btn {
-  opacity: 0.6;
-  cursor: not-allowed;
+  padding: 10px 20px;
+  background-color: #2C7873;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer; /* 确保光标是可点击状态 */
+  font-size: 14px;
+  transition: all 0.3s ease;
+  opacity: 1; /* 确保按钮完全可见 */
 }
-
-.submit-btn.active {
-  opacity: 1;
-  cursor: pointer;
+.submit-btn:hover {
+  background-color: #1a5a56;
 }
 </style>

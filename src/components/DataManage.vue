@@ -47,10 +47,27 @@
             <div class="data-content">
               <div class="data-row">
                 <span>位置：{{ item.longitude }}, {{ item.latitude }}</span>
-                <span>类型：{{ item.pollutionType }}</span>
               </div>
-              <div class="data-row">
-                <span>污染物：{{ item.pollutants }}</span>
+              <!-- 修改污染物展示结构 -->
+              <div class="pollutants-details">
+                <div v-if="item.pollutants.soil && Object.keys(item.pollutants.soil).length > 0" class="pollution-category">
+                  <strong>土壤:</strong>
+                  <div class="pollutant-item" v-for="(value, key) in item.pollutants.soil" :key="key">
+                    {{ key.toUpperCase() }}: {{ value === null || value === undefined ? '-' : value }}
+                  </div>
+                </div>
+                <div v-if="item.pollutants.air && Object.keys(item.pollutants.air).length > 0" class="pollution-category">
+                  <strong>空气:</strong>
+                  <div class="pollutant-item" v-for="(value, key) in item.pollutants.air" :key="key">
+                    {{ key.toUpperCase() }}: {{ value === null || value === undefined ? '-' : value }}
+                  </div>
+                </div>
+                <div v-if="item.pollutants.vegetable && Object.keys(item.pollutants.vegetable).length > 0" class="pollution-category">
+                  <strong>蔬菜:</strong>
+                  <div class="pollutant-item" v-for="(value, key) in item.pollutants.vegetable" :key="key">
+                    {{ key.toUpperCase() }}: {{ value === null || value === undefined ? '-' : value }}
+                  </div>
+                </div>
               </div>
             </div>
             <div class="data-actions">
@@ -70,10 +87,27 @@
             <div class="data-content">
               <div class="data-row">
                 <span>位置：{{ item.longitude }}, {{ item.latitude }}</span>
-                <span>类型：{{ item.pollutionType }}</span>
               </div>
-              <div class="data-row">
-                <span>污染物：{{ item.pollutants }}</span>
+              <!-- 修改污染物展示结构 -->
+              <div class="pollutants-details">
+                <div v-if="item.pollutants.soil && Object.keys(item.pollutants.soil).length > 0" class="pollution-category">
+                  <strong>土壤:</strong>
+                  <span>
+                    {{ Object.entries(item.pollutants.soil).map(([key, value]) => `${key.toUpperCase()}: ${value === null || value === undefined ? '-' : value}`).join(', ') }}
+                  </span>
+                </div>
+                <div v-if="item.pollutants.air && Object.keys(item.pollutants.air).length > 0" class="pollution-category">
+                  <strong>空气:</strong>
+                  <span>
+                    {{ Object.entries(item.pollutants.air).map(([key, value]) => `${key.toUpperCase()}: ${value === null || value === undefined ? '-' : value}`).join(', ') }}
+                  </span>
+                </div>
+                <div v-if="item.pollutants.vegetable && Object.keys(item.pollutants.vegetable).length > 0" class="pollution-category">
+                  <strong>蔬菜:</strong>
+                  <span>
+                    {{ Object.entries(item.pollutants.vegetable).map(([key, value]) => `${key.toUpperCase()}: ${value === null || value === undefined ? '-' : value}`).join(', ') }}
+                  </span>
+                </div>
               </div>
             </div>
             <div class="data-actions">
@@ -87,6 +121,8 @@
 </template>
 
 <script>
+import axios from 'axios'; // 导入 axios
+
 export default {
   name: 'DataManage',
   data() {
@@ -97,55 +133,213 @@ export default {
         { key: 'pending', label: '待审核数据' },
         { key: 'approved', label: '已有数据' }
       ],
-      pendingData: [
-        {
-          id: 1,
-          name: '测试点位1',
-          time: '2024-01-20 10:30',
-          longitude: 114.311855,
-          latitude: 30.608737,
-          pollutionType: '空气',
-          pollutants: 'PM2.5: 75μg/m³, SO₂: 35μg/m³'
-        }
-      ],
-      approvedData: [
-        {
-          id: 2,
-          name: '测试点位2',
-          time: '2024-01-19 15:45',
-          longitude: 114.312855,
-          latitude: 30.609737,
-          pollutionType: '土壤重金属',
-          pollutants: 'Pb: 50mg/kg, Cd: 0.3mg/kg'
-        }
-      ]
+      pendingData: [], // 初始化为空数组，将从 API 获取数据
+      approvedData: [] // 初始化为空数组，将从 API 获取数据
+    };
+  },
+  watch: {
+    currentTab(newTab) {
+      if (newTab === 'approved') {
+        this.fetchApprovedData();
+      } else if (newTab === 'pending') {
+        this.fetchPendingData();
+      }
     }
   },
   methods: {
     goToHome() {
-      this.$router.push('/')
+      this.$router.push('/');
     },
     goToPlot() {
-      this.$router.push('/plot')
+      this.$router.push('/plot');
     },
     goToDataAdding() {
-      this.$router.push('/data-adding')
+      this.$router.push('/data-adding');
     },
     handleUserClick() {
-      this.$router.push('/login')
+      this.$router.push('/login');
     },
-    approveData() {
-      // 实现审核通过逻辑
-      alert('审核通过')
+    async fetchPendingData() { // 新增异步方法获取待审核数据
+      try {
+        const response = await axios.get('/api/pollution/awaiting1');
+        if (response.data && response.data.code === 200) {
+          this.pendingData = response.data.data.map(item => {
+            const pollutants = {
+              soil: { pb: null, cu: null, zn: null, cd: null, cr: null, ars: null, ap: null, hn: null, avs: null, k: null },
+              air: { pm10: null, pm2_5: null},
+              vegetable: {pb: null, cu: null, zn: null, cd: null, cr: null, ars: null, ap: null, hn: null, avs: null, k: null}
+            };
+
+            if (item.soilPollution) {
+              for (const key in pollutants.soil) {
+                if (Object.prototype.hasOwnProperty.call(item.soilPollution, key)) {
+                  pollutants.soil[key] = item.soilPollution[key];
+                }
+              }
+            }
+            if (item.airPollution) {
+              for (const key in pollutants.air) {
+                if (Object.prototype.hasOwnProperty.call(item.airPollution, key)) {
+                  pollutants.air[key] = item.airPollution[key];
+                }
+              }
+            }
+            if (item.vegetablePollution) {
+              for (const key in pollutants.vegetable) {
+                if (Object.prototype.hasOwnProperty.call(item.vegetablePollution, key)) {
+                  pollutants.vegetable[key] = item.vegetablePollution[key];
+                }
+              }
+            }
+
+            return {
+              id: item.pollutionPoint.pointId, // 使用 pointId 作为唯一标识
+              name: item.pollutionPoint.stationName,
+              time: new Date(item.pollutionPoint.createTime).toLocaleString(), // 格式化时间
+              longitude: item.pollutionPoint.longitude,
+              latitude: item.pollutionPoint.latitude,
+              pollutionTypeOriginal: this.translatePollutionType(item.pollutionPoint.pollutionType), // 保存转换后的污染类型文本
+              pollutants: pollutants, // 使用处理后的污染物对象
+              originalData: item 
+            };
+          });
+        } else {
+          console.error('获取待审核数据失败:', response.data.message);
+          alert('获取待审核数据失败: ' + response.data.message);
+        }
+      } catch (error) {
+        console.error('请求待审核数据接口时发生错误:', error);
+        alert('请求待审核数据接口时发生错误，请检查网络或联系管理员。');
+      }
     },
-    rejectData() {
-      // 实现拒绝逻辑
-      alert('已拒绝')
+    async fetchApprovedData() { // 新增异步方法获取已审核数据
+      try {
+        const response = await axios.get('/api/pollution/awaiting2');
+        if (response.data && response.data.code === 200) {
+          this.approvedData = response.data.data.map(item => {
+            const pollutants = {
+              soil: { pb: null, cu: null, zn: null, cd: null, cr: null, ars: null, ap: null, hn: null, avs: null, k: null },
+              air: { pm10: null, pm2_5: null},
+              vegetable: {pb: null, cu: null, zn: null, cd: null, cr: null, ars: null, ap: null, hn: null, avs: null, k: null}
+            };
+
+            if (item.soilPollution) {
+              for (const key in pollutants.soil) {
+                if (Object.prototype.hasOwnProperty.call(item.soilPollution, key)) {
+                  pollutants.soil[key] = item.soilPollution[key];
+                }
+              }
+            }
+            if (item.airPollution) {
+              for (const key in pollutants.air) {
+                if (Object.prototype.hasOwnProperty.call(item.airPollution, key)) {
+                  pollutants.air[key] = item.airPollution[key];
+                }
+              }
+            }
+            if (item.vegetablePollution) {
+              for (const key in pollutants.vegetable) {
+                if (Object.prototype.hasOwnProperty.call(item.vegetablePollution, key)) {
+                  pollutants.vegetable[key] = item.vegetablePollution[key];
+                }
+              }
+            }
+
+            return {
+              id: item.pollutionPoint.pointId,
+              name: item.pollutionPoint.stationName,
+              time: new Date(item.pollutionPoint.createTime).toLocaleString(),
+              longitude: item.pollutionPoint.longitude,
+              latitude: item.pollutionPoint.latitude,
+              pollutionTypeOriginal: this.translatePollutionType(item.pollutionPoint.pollutionType),
+              pollutants: pollutants,
+              originalData: item
+            };
+          });
+        } else {
+          console.error('获取已审核数据失败:', response.data.message);
+          alert('获取已审核数据失败: ' + (response.data.message || '未知错误'));
+        }
+      } catch (error) {
+        console.error('请求已审核数据接口时发生错误:', error);
+        alert('请求已审核数据接口时发生错误，请检查网络或联系管理员。');
+      }
     },
-    deleteData() {
-      // 实现删除逻辑
-      alert('删除成功')
+    translatePollutionType(type) { // 辅助方法转换污染类型显示
+      switch (type) {
+        case 'soil':
+          return '土壤';
+        case 'air':
+          return '空气';
+        case 'vegetable':
+          return '蔬菜';
+      }
+    },
+    async approveData(id) {
+      const itemToApprove = this.pendingData.find(item => item.id === id);
+      if (!itemToApprove) {
+        alert('未找到要审核的数据项');
+        return;
+      }
+      try {
+        const response = await axios.post(`/api/pollution/${id}/approve`);
+        if (response.data && response.data.code === 200) {
+          alert(`数据点 "${itemToApprove.name}" 审核通过成功！`);
+          this.fetchPendingData(); // 刷新待审核列表
+        } else {
+          console.error('审核通过失败:', response.data.message);
+          alert('审核通过失败: ' + (response.data.message || '未知错误'));
+        }
+      } catch (error) {
+        console.error('请求审核通过接口时发生错误:', error);
+        alert('请求审核通过接口时发生错误，请检查网络或联系管理员。');
+      }
+    },
+    async rejectData(id) {
+      const itemToReject = this.pendingData.find(item => item.id === id);
+      if (!itemToReject) {
+        alert('未找到要拒绝的数据项');
+        return;
+      }
+      try {
+        const response = await axios.post(`/api/pollution/${id}/reject`);
+        if (response.data && response.data.code === 200) {
+          alert(`数据点 "${itemToReject.name}" 已成功拒绝！`);
+          this.fetchPendingData(); // 刷新待审核列表
+        } else {
+          console.error('拒绝数据失败:', response.data.message);
+          alert('拒绝数据失败: ' + (response.data.message || '未知错误'));
+        }
+      } catch (error) {
+        console.error('请求拒绝数据接口时发生错误:', error);
+        alert('请求拒绝数据接口时发生错误，请检查网络或联系管理员。');
+      }
+    },
+    async deleteData(id) {
+      const itemToDelete = this.approvedData.find(item => item.id === id);
+      if (!itemToDelete) {
+        alert('未找到要删除的数据项');
+        return;
+      }
+      try {
+        // 调用删除接口
+        const response = await axios.delete(`/api/pollution/delete/${id}`); 
+        if (response.data && response.data.code === 200) {
+          alert(`数据点 "${itemToDelete.name}" 删除成功！`);
+          this.fetchApprovedData(); // 刷新已有数据列表
+        } else {
+          console.error('删除数据失败:', response.data.message);
+          alert('删除数据失败: ' + (response.data.message || '未知错误'));
+        }
+      } catch (error) {
+        console.error('请求删除数据接口时发生错误:', error);
+        alert('请求删除数据接口时发生错误，请检查网络或联系管理员。');
+      }
     }
+  },
+  mounted() {
+    this.fetchPendingData(); // 组件挂载后调用方法获取数据
+    this.fetchApprovedData(); // 组件挂载后调用方法获取数据
   }
 }
 </script>

@@ -2,49 +2,45 @@
   <div class="plot-wrapper">
     <!-- 顶部导航栏 -->
     <div class="nav-bar">
-      <div class="nav-container">
-        <!-- 左侧标签页 -->
-        <div class="nav-tabs">
-          <div class="tab" @click="goToMap">污染地图</div>
-          <div class="tab active">污染统计</div>
-          <div class="tab" @click="goToDataAdding">数据添加</div>
-          <div class="tab" @click="goToDataMng">数据管理</div>
-        </div>
-        <!-- 中间标题 -->
-        <div class="nav-title">青山工业区多介质污染综合管理网站</div>
-        <!-- 右侧用户信息 -->
-        <div class="user-info" @click="handleUserClick">
-          <span>请登录</span>
-          <div class="user-dropdown" v-if="showUserMenu">
-            <div class="user-dropdown-item">
-              <div>用户名：张三</div>
-              <div>身份：访客</div>
+      <!-- 第一行：网站标题 -->
+      <div class="title-row">
+        <div class="main-title">青山沿江化工区域重金属健康风险数智管理网站</div>
+      </div>
+      <!-- 第二行：导航按钮和用户信息 -->
+      <div class="nav-row">
+        <div class="nav-container">
+          <!-- 左侧标签页 -->
+          <div class="nav-tabs">
+            <div
+              v-for="(tab, index) in navTabs"
+              :key="index"
+              class="tab"
+              :class="{ active: tab.active }"
+              @click="handleTabClick(tab.action)"
+            >
+              {{ tab.text }}
+            </div>
+          </div>
+          <!-- 右侧用户信息 -->
+          <div class="user-info" @click="handleUserClick">
+            <span v-if="currentUser">你好，{{ currentUser.username }}</span>
+            <span v-else>请登录</span>
+            <!-- 用户下拉菜单 -->
+            <div class="user-dropdown" v-if="showUserMenu && currentUser">
+              <div class="user-dropdown-item">
+                <div>用户名：{{ currentUser.username }}</div>
+                <div>身份：访客</div>
+                <!-- 可以添加登出按钮 -->
+                <button @click.stop="logout">退出登录</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 子页面切换栏 -->
-    <div class="sub-nav-bar">
-      <div
-        class="sub-tab"
-        :class="{ active: activeTab === 'statistics' }"
-        @click="activeTab = 'statistics'"
-      >
-        统计数据
-      </div>
-      <div
-        class="sub-tab"
-        :class="{ active: activeTab === 'calculation' }"
-        @click="activeTab = 'calculation'"
-      >
-        计算方法
-      </div>
-    </div>
-
     <!-- 统计数据展示区域 -->
-    <div class="plot-container" v-if="activeTab === 'statistics'">
+    <div class="plot-container">
       <div class="plot-grid"> <!-- Removed single-card, will use grid-template-columns for two cards -->
         <!-- 第一个卡片：蔬菜重金属含量 -->
         <div class="plot-card"> <!-- Removed full-width-card -->
@@ -62,7 +58,7 @@
               <tbody>
                 <tr v-for="veg in vegetableData" :key="veg.name">
                   <td>{{ veg.name }}</td>
-                  <td v-for="metal in metals" :key="metal.key" :style="getCellStyle(veg[metal.key], metal.key)">
+                  <td v-for="metal in metals" :key="metal.key">
                     {{ veg[metal.key] }}
                   </td>
                 </tr>
@@ -99,10 +95,7 @@
       </div>
     </div>
 
-    <!-- 计算方法展示区域 -->
-    <div class="calculation-container" v-if="activeTab === 'calculation'">
-      <iframe src="/risk_calculation.html" frameborder="0" class="calculation-iframe"></iframe>
-    </div>
+
 
   </div>
 </template>
@@ -114,15 +107,23 @@ export default {
   name: 'PollutionPlot',
   data() {
     return {
+      navTabs: [
+        { text: '污染地图', active: false, action: 'goToMap' },
+        { text: '污染统计', active: true, action: 'goToPlot' },
+        { text: '数据添加', active: false, action: 'goToDataAdding' },
+        { text: '数据管理', active: false, action: 'goToDataMng' },
+        { text: '算法文档', active: false, action: 'goToDocument' }
+      ],
       showUserMenu: false,
-      activeTab: 'statistics', // 默认显示统计数据
+      currentUser: null, // 用于存储当前登录的用户信息
+
       metals: [
-        { key: 'Zn', name: 'Zn', min: 0, max: 10 },
-        { key: 'Cu', name: 'Cu', min: 0, max: 1.2 },
-        { key: 'Cr', name: 'Cr', min: 0, max: 0.8 },
-        { key: 'Cd', name: 'Cd', min: 0, max: 0.12 },
-        { key: 'Pb', name: 'Pb', min: 0, max: 3 },
-        { key: 'As', name: 'As', min: 0, max: 0.3 },
+        { key: 'Zn', name: 'Zn' },
+        { key: 'Cu', name: 'Cu' },
+        { key: 'Cr', name: 'Cr' },
+        { key: 'Cd', name: 'Cd' },
+        { key: 'Pb', name: 'Pb' },
+        { key: 'As', name: 'As' },
       ],
       vegetableData: [
         { name: '白菜', Zn: 3.7626, Cu: 0.4289, Cr: 0.0659, Cd: 0.0326, Pb: 1.0196, As: 0.0237 },
@@ -146,55 +147,69 @@ export default {
       ]
     }
   },
-  // mounted 和 watch 中关于 initChartsOnce 的部分可以移除
-  // mounted() {
-  //   if (this.activeTab === 'statistics') {
-  //     // this.initChartsOnce(); // 不再需要
-  //   }
-  // },
-  // watch: {
-  //   activeTab(newTab) {
-  //     if (newTab === 'statistics') {
-  //       // this.initChartsOnce(); // 不再需要
-  //     }
-  //   }
-  // },
+  mounted() {
+    // 检查用户登录状态
+    const userData = localStorage.getItem('currentUser');
+    if (userData) {
+      try {
+        this.currentUser = JSON.parse(userData);
+      } catch (error) {
+        console.error('解析用户数据失败:', error);
+        localStorage.removeItem('currentUser');
+      }
+    }
+  },
   methods: {
+    // 添加处理用户点击的方法
+    handleUserClick() {
+      if (this.currentUser) {
+        // 如果已登录，可以切换用户菜单的显示，或者不执行任何操作
+        this.showUserMenu = !this.showUserMenu;
+        console.log('用户已登录:', this.currentUser.username);
+      } else {
+        // 如果未登录，则跳转到登录页
+        this.$router.push('/login');
+      }
+    },
+
+    // 添加登出方法 (如果需要)
+    logout() {
+      localStorage.removeItem('currentUser');
+      this.currentUser = null;
+      this.showUserMenu = false; // 关闭下拉菜单
+      // 可以选择跳转到登录页或首页
+      this.$router.push('/login'); 
+      // 或者刷新页面以确保状态完全重置
+      // window.location.reload(); 
+    },
     goToMap() {
-      this.$router.push('/home');
+      this.$router.push('/');
     },
     goToDataAdding() {
       this.$router.push('/data-adding');
     },
+    // 添加跳转到统计页面的方法
+    goToPlot() {
+      this.$router.push('/plot');
+    },
     goToDataMng() {
       this.$router.push('/DataManage');
     },
-    handleUserClick() {
-      this.$router.push('/login');
+    goToDocument() {
+      this.$router.push('/riskDocument');
     },
-    // initChartsOnce 和其他 createChart 方法已移除
-    getCellStyle(value, metalKey) {
-      const metalConfig = this.metals.find(m => m.key === metalKey);
-      if (!metalConfig) return {};
+    handleTabClick(action) {
+      // 查找 navTabs 数组中对应的项并更新 active 状态
+      this.navTabs.forEach(tab => {
+        tab.active = tab.action === action;
+      });
 
-      const { min, max } = metalConfig;
-      // 归一化值到 0-1 之间
-      const normalizedValue = Math.max(0, Math.min(1, (value - min) / (max - min)));
-
-      // 定义渐变色的起始和结束 (例如：从绿色到红色)
-      // 您可以调整这些颜色
-      const startColor = { r: 144, g: 238, b: 144 }; // LightGreen
-      const endColor = { r: 255, g: 99, b: 71 };   // Tomato
-
-      // 计算中间色
-      const r = Math.round(startColor.r + (endColor.r - startColor.r) * normalizedValue);
-      const g = Math.round(startColor.g + (endColor.g - startColor.g) * normalizedValue);
-      const b = Math.round(startColor.b + (endColor.b - startColor.b) * normalizedValue);
-
-      return {
-        backgroundColor: `rgb(${r}, ${g}, ${b})`,
-        color: normalizedValue > 0.6 ? 'white' : 'black', // 根据背景色深浅调整文字颜色
-      };
+      // 执行对应的跳转方法
+      if (typeof this[action] === 'function') {
+        this[action]();
+      } else {
+        console.warn(`Action "${action}" is not a defined method.`);
+      }
     }
   }
 }
@@ -215,15 +230,41 @@ export default {
 
 .nav-bar {
   width: 100%;
-  height: 60px;
+  height: 100px; /* 增加高度以容纳两行 */
   position: relative;
   background-color: #2C7873;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 第一行：标题行 */
+.title-row {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 20px;
+}
+
+.main-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+}
+
+/* 第二行：导航行 */
+.nav-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  margin-top: 5px; /* 增加顶部间隙 */
 }
 
 .nav-container {
-  height: 100%;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -234,33 +275,35 @@ export default {
 
 .nav-tabs {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  flex: 0 0 auto;
+  min-width: 0;
 }
 
 .tab {
-  padding: 6px 16px;
+  padding: 8px 16px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.3s ease;
   color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .tab:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .tab.active {
-  background-color: #52958B;
+  background-color: rgba(255, 255, 255, 0.3);
   color: white;
-}
-
-.nav-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 20px;
   font-weight: bold;
-  color: white;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .user-info {
@@ -269,10 +312,50 @@ export default {
   padding: 8px 16px;
   border-radius: 4px;
   transition: all 0.3s ease;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  position: relative;
 }
 
 .user-info:hover {
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 12px;
+  min-width: 200px;
+  z-index: 1000;
+  color: #333;
+}
+
+.user-dropdown-item {
+  padding: 8px 0;
+}
+
+.user-dropdown-item div {
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.user-dropdown-item button {
+  background: #2C7873;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.user-dropdown-item button:hover {
+  background: #1f5a56;
 }
 
 .sub-nav-bar {
@@ -306,6 +389,7 @@ export default {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
+  height: calc(100% - 100px); /* 适应导航栏高度增加 */
 }
 
 .calculation-container {

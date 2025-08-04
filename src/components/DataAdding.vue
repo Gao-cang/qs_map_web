@@ -2,24 +2,37 @@
   <div class="data-adding-wrapper">
     <!-- 顶部导航栏 -->
     <div class="nav-bar">
-      <div class="nav-container">
-        <!-- 左侧标签页 -->
-        <div class="nav-tabs">
-          <div class="tab" @click="goToHome">污染地图</div>
-          <div class="tab" @click="goToPlot">污染统计</div>
-          <div class="tab active">数据添加</div>
-          <div class="tab" @click="goToDataMng">数据管理</div>
-        </div>
-        <!-- 中间标题 -->
-        <div class="nav-title">青山工业区多介质污染综合管理网站</div>
-        <!-- 右侧用户信息 -->
-        <div class="user-info" @click="handleUserClick">
-          <span>请登录</span>
-          <!-- 用户下拉菜单 -->
-          <div class="user-dropdown" v-if="showUserMenu">
-            <div class="user-dropdown-item">
-              <div>用户名：张三</div>
-              <div>身份：访客</div>
+      <!-- 第一行：网站标题 -->
+      <div class="title-row">
+        <div class="main-title">青山沿江化工区域重金属健康风险数智管理网站</div>
+      </div>
+      <!-- 第二行：导航按钮和用户信息 -->
+      <div class="nav-row">
+        <div class="nav-container">
+          <!-- 左侧标签页 -->
+          <div class="nav-tabs">
+            <div
+              v-for="(tab, index) in tabs"
+              :key="index"
+              class="tab"
+              :class="{ active: tab.active }"
+              @click="handleTabClick(tab.action)"
+            >
+              {{ tab.text }}
+            </div>
+          </div>
+          <!-- 右侧用户信息 -->
+          <div class="user-info" @click="handleUserClick">
+            <span v-if="currentUser">你好，{{ currentUser.username }}</span>
+            <span v-else>请登录</span>
+            <!-- 用户下拉菜单 -->
+            <div class="user-dropdown" v-if="showUserMenu && currentUser">
+              <div class="user-dropdown-item">
+                <div>用户名：{{ currentUser.username }}</div>
+                <div>身份：访客</div>
+                <!-- 可以添加登出按钮 -->
+                <button @click.stop="logout">退出登录</button>
+              </div>
             </div>
           </div>
         </div>
@@ -146,7 +159,15 @@ export default {
   name: 'DataAdding',
   data() {
     return {
+      tabs: [
+        { text: '污染地图', active: false, action: 'goToMap' },
+        { text: '污染统计', active: false, action: 'goToPlot' },
+        { text: '数据添加', active: true, action: 'goToDataAdding' },
+        { text: '数据管理', active: false, action: 'goToDataMng' },
+        { text: '算法文档', active: false, action: 'goToDocument' }
+      ],
       showUserMenu: false,
+      currentUser: null, // 用于存储当前登录的用户信息,
       map: null,
       AMap: null,
       marker: null,
@@ -204,6 +225,17 @@ export default {
     }
   },
   mounted() {
+    // 检查用户登录状态
+    const userData = localStorage.getItem('currentUser');
+    if (userData) {
+      try {
+        this.currentUser = JSON.parse(userData);
+      } catch (error) {
+        console.error('解析用户数据失败:', error);
+        localStorage.removeItem('currentUser');
+      }
+    }
+    
     // 添加生命周期钩子，在组件挂载后初始化地图
     this.$nextTick(() => {
       this.initMap();
@@ -378,17 +410,56 @@ export default {
       }
     },
     
-    goToHome() {
+    // 添加处理用户点击的方法
+    handleUserClick() {
+      if (this.currentUser) {
+        // 如果已登录，可以切换用户菜单的显示，或者不执行任何操作
+        this.showUserMenu = !this.showUserMenu;
+        console.log('用户已登录:', this.currentUser.username);
+      } else {
+        // 如果未登录，则跳转到登录页
+        this.$router.push('/login');
+      }
+    },
+
+    // 添加登出方法 (如果需要)
+    logout() {
+      localStorage.removeItem('currentUser');
+      this.currentUser = null;
+      this.showUserMenu = false; // 关闭下拉菜单
+      // 可以选择跳转到登录页或首页
+      this.$router.push('/login'); 
+      // 或者刷新页面以确保状态完全重置
+      // window.location.reload(); 
+    },
+    goToMap() {
       this.$router.push('/');
     },
+    goToDataAdding() {
+      this.$router.push('/data-adding');
+    },
+    // 添加跳转到统计页面的方法
     goToPlot() {
       this.$router.push('/plot');
     },
-    handleUserClick() {
-      this.$router.push('/login');
-    },
     goToDataMng() {
       this.$router.push('/DataManage');
+    },
+    goToDocument() {
+      window.open('/riskDocument');
+    },
+    handleTabClick(action) {
+      // 查找 tabs 数组中对应的项并更新 active 状态
+      this.tabs.forEach(tab => {
+        tab.active = tab.action === action;
+      });
+
+      // 执行对应的跳转方法
+      if (typeof this[action] === 'function') {
+        this[action]();
+      } else {
+        console.warn(`Action "${action}" is not a defined method.`);
+      }
     }
   }
 }
@@ -409,15 +480,41 @@ export default {
 
 .nav-bar {
   width: 100%;
-  height: 60px;
+  height: 100px; /* 增加高度以容纳两行 */
   position: relative;
   background-color: #2C7873;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 第一行：标题行 */
+.title-row {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 20px;
+}
+
+.main-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+}
+
+/* 第二行：导航行 */
+.nav-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  margin-top: 5px; /* 增加顶部间隙 */
 }
 
 .nav-container {
-  height: 100%;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -428,34 +525,35 @@ export default {
 
 .nav-tabs {
   display: flex;
-  gap: 10px;
-  margin-left: 0;
+  gap: 12px;
+  flex: 0 0 auto;
+  min-width: 0;
 }
 
 .tab {
-  padding: 6px 16px;
+  padding: 8px 16px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.3s ease;
   color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .tab:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .tab.active {
-  background-color: #52958B;
+  background-color: rgba(255, 255, 255, 0.3);
   color: white;
-}
-
-.nav-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 20px;
   font-weight: bold;
-  color: white;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .user-info {
@@ -464,16 +562,56 @@ export default {
   padding: 8px 16px;
   border-radius: 4px;
   transition: all 0.3s ease;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  position: relative;
 }
 
 .user-info:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 12px;
+  min-width: 200px;
+  z-index: 1000;
+  color: #333;
+}
+
+.user-dropdown-item {
+  padding: 8px 0;
+}
+
+.user-dropdown-item div {
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.user-dropdown-item button {
+  background: #2C7873;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.user-dropdown-item button:hover {
+  background: #1f5a56;
+}
+
 .content-container {
   display: flex;
   padding: 20px;
-  height: calc(100% - 60px);
+  height: calc(100% - 100px);
   box-sizing: border-box;
   gap: 20px;
 }

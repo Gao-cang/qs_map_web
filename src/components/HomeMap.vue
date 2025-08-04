@@ -2,27 +2,37 @@
   <div class="amap-wrapper">
     <!-- 顶部导航栏 -->
     <div class="nav-bar">
-      <div class="nav-container">
-        <!-- 左侧标签页 -->
-        <div class="nav-tabs">
-          <div class="tab active">污染地图</div>
-          <div class="tab" @click="goToPlot">污染统计</div>
-          <div class="tab" @click="goToDataAdding">数据添加</div>
-          <div class="tab" @click="goToDataMng">数据管理</div>
-        </div>
-        <!-- 中间标题 -->
-        <div class="nav-title">青山沿江化工区重金属污染综合管理网站</div>
-        <!-- 右侧用户信息 -->
-        <div class="user-info" @click="handleUserClick">
-          <span v-if="currentUser">你好，{{ currentUser.username }}</span> <!-- 假设用户信息对象中有 username 属性 -->
-          <span v-else>请登录</span>
-          <!-- 用户下拉菜单 (如果登录后还需要下拉菜单，可以调整这里的 v-if) -->
-          <div class="user-dropdown" v-if="showUserMenu && currentUser">
-            <div class="user-dropdown-item">
-              <div>用户名：{{ currentUser.username }}</div>
-              <div>身份：访客</div> <!-- 这里可以根据实际用户角色显示 -->
-              <!-- 可以添加登出按钮 -->
-              <button @click.stop="logout">退出登录</button>
+      <!-- 第一行：网站标题 -->
+      <div class="title-row">
+        <div class="main-title">青山沿江化工区域重金属健康风险数智管理网站</div>
+      </div>
+      <!-- 第二行：导航按钮和用户信息 -->
+      <div class="nav-row">
+        <div class="nav-container">
+          <!-- 左侧标签页 -->
+          <div class="nav-tabs">
+            <div
+              v-for="(tab, index) in tabs"
+              :key="index"
+              class="tab"
+              :class="{ active: tab.active }"
+              @click="handleTabClick(tab.action)"
+            >
+              {{ tab.text }}
+            </div>
+          </div>
+          <!-- 右侧用户信息 -->
+          <div class="user-info" @click="handleUserClick">
+            <span v-if="currentUser">你好，{{ currentUser.username }}</span>
+            <span v-else>请登录</span>
+            <!-- 用户下拉菜单 -->
+            <div class="user-dropdown" v-if="showUserMenu && currentUser">
+              <div class="user-dropdown-item">
+                <div>用户名：{{ currentUser.username }}</div>
+                <div>身份：访客</div>
+                <!-- 可以添加登出按钮 -->
+                <button @click.stop="logout">退出登录</button>
+              </div>
             </div>
           </div>
         </div>
@@ -57,6 +67,13 @@ export default {
   name: 'HomeMap',
   data() {
     return {
+      tabs: [
+        { text: '污染地图', active: true, action: 'goToMap' },
+        { text: '污染统计', active: false, action: 'goToPlot' },
+        { text: '数据添加', active: false, action: 'goToDataAdding' },
+        { text: '数据管理', active: false, action: 'goToDataMng' },
+        { text: '算法文档', active: false, action: 'goToDocument' }
+      ],
       showUserMenu: false,
       currentUser: null, // 用于存储当前登录的用户信息
       map: null,
@@ -70,7 +87,7 @@ export default {
           pollutionValue: 10.0,
           pollutionType: 'soil',
           // 假设的详细污染物数据 (土壤/蔬菜)
-          Pb: 1.23, Cu: 2.34, Zn: 3.45, Cd: 0.12, Cr: 0.56, As: 0.07, AP: 10.8, HN: 5.2, AS: 0.15, K: 150.5, // AS_total 避免与 As 关键字冲突
+          Pb: 1.23, Cu: 2.34, Zn: 3.45, Cd: 0.12, Cr: 0.56, As: 0.07 // AS_total 避免与 As 关键字冲突
         },
         {
           id: 2,
@@ -79,7 +96,7 @@ export default {
           latitude: 30.628737,
           pollutionValue: 20.0,
           pollutionType: 'vegetable',
-          Pb: 1.53, Cu: 2.64, Zn: 3.75, Cd: 0.22, Cr: 0.66, As: 0.17, AP: 11.8, HN: 6.2, AS: 0.25, K: 160.5,
+          Pb: 1.53, Cu: 2.64, Zn: 3.75, Cd: 0.22, Cr: 0.66, As: 0.17
         },
         {
           id: 3,
@@ -179,7 +196,7 @@ export default {
             latitude: 30.638737,
             pollutionValue: 10.0,
             pollutionType: 'soil',
-            // Pb: 1.23, Cu: 2.34, Zn: 3.45, Cd: 0.12, Cr: 0.56, As: 0.07, AP: 10.8, HN: 5.2, AS_total: 0.15, K: 150.5
+            Pb: 1.23, Cu: 2.34, Zn: 3.45, Cd: 0.12, Cr: 0.56, As: 0.07
           }
         ],
         vegetable: [
@@ -190,7 +207,7 @@ export default {
             latitude: 30.628737,
             pollutionValue: 20.0,
             pollutionType: 'vegetable',
-            // Pb: 1.53, Cu: 2.64, Zn: 3.75, Cd: 0.22, Cr: 0.66, As: 0.17, AP: 11.8, HN: 6.2, AS_total: 0.25, K: 160.5
+            Pb: 1.53, Cu: 2.64, Zn: 3.75, Cd: 0.22, Cr: 0.66, As: 0.17
           }
         ],
         air: [
@@ -201,7 +218,7 @@ export default {
             latitude: 30.628737,
             pollutionValue: 20.0,
             pollutionType: 'air',
-            // PM2_5: 25.5, PM10: 55.1
+            PM2_5: 25.5, PM10: 55.1
           }
         ]
       };
@@ -243,7 +260,7 @@ export default {
           this.AMap = await window.AMapLoader.load({
             key: 'c909057b33762148f3f108186dd9c643',
             version: '2.0',
-            plugins: ['AMap.Scale', 'AMap.ToolBar', 'AMap.ControlBar', 'AMap.DistrictSearch', 'AMap.Event'],
+            plugins: ['AMap.Scale', 'AMap.ToolBar', 'AMap.ControlBar', 'AMap.Event'],
           });
 
           // 使用组件实例中的 AMap
@@ -283,59 +300,45 @@ export default {
       const map = this.map;   // 使用 this.map
       let polygons = [];
 
-      var opts = {
-        subdistrict: 0,   // 设置为0，不返回下级行政区
-        extensions: 'all',  // 返回行政区边界坐标组等具体信息
-        level: 'district'  // 查询行政级别为 区县
-      };
-      //实例化DistrictSearch
-      var district = new AMap.DistrictSearch(opts);
+      // 定义矩形的四个顶点坐标
+      // 左上角: (114.449370, 30.671787)
+      // 右下角: (114.571329, 30.610455)
+      const rectanglePath = [
+        [114.449370, 30.676787], // 左上角
+        [114.541262, 30.676787], // 右上角
+        [114.541262, 30.610455], // 右下角
+        [114.449370, 30.610455], // 左下角
+        [114.449370, 30.676787]  // 闭合到起点
+      ];
 
-      //行政区查询
-      district.search('420107', (status, result) => {
-        if (status === 'complete' && result.info === 'OK') {
-          if (result.districtList && result.districtList.length > 0) {
-            const bounds = result.districtList[0].boundaries;
-            if (bounds) {
-              for (var i = 0, l = bounds.length; i < l; i++) {
-                //生成行政区划polygon
-                var polygon = new AMap.Polygon({
-                  map: map,
-                  path: bounds[i],
-                  zIndex: 10,
-                  fillOpacity: 0.38,
-                  fillColor: '#87CEFA', // 淡蓝色填充
-                  strokeColor: '#0000FF', // 蓝色边界
-                  strokeWeight: 1,    //线宽
-                  strokeStyle:'dashed',   // 可以根据需要设置虚线
-                  bubble: true,   //允许事件冒泡
-                });
-                polygons.push(polygon);
-              }
-              if (polygons.length > 0) {
-                map.setFitView(polygons); // 让地图自适应显示绘制的区域
-              }
-            } else {
-              console.error('青山区边界数据为空');
-            }
-            // 使用 this.AMap.event 来确保作用域正确
-            map.on("zoomchange", function () {
-              const currentZoom = map.getZoom();
-              polygons.forEach(p => {
-                if (currentZoom >= 14) {
-                  p.hide();
-                } else {
-                  p.show();
-                }
-              });
-            });
+      // 创建矩形多边形
+      var polygon = new AMap.Polygon({
+        map: map,
+        path: rectanglePath,
+        zIndex: 10,
+        fillOpacity: 0.38,
+        fillColor: '#87CEFA', // 淡蓝色填充
+        strokeColor: '#0000FF', // 蓝色边界
+        strokeWeight: 1,    //线宽
+        strokeStyle:'dashed',   // 可以根据需要设置虚线
+        bubble: true,   //允许事件冒泡
+      });
+      polygons.push(polygon);
 
+      if (polygons.length > 0) {
+        map.setFitView(polygons); // 让地图自适应显示绘制的区域
+      }
+
+      // 添加缩放变化监听
+      map.on("zoomchange", function () {
+        const currentZoom = map.getZoom();
+        polygons.forEach(p => {
+          if (currentZoom >= 14) {
+            p.hide();
           } else {
-            console.error('未找到青山区数据');
+            p.show();
           }
-        } else {
-          console.error('行政区查询失败:', status, result);
-        }
+        });
       });
     },
 
@@ -463,7 +466,7 @@ export default {
       if (!AMap) return '<div>AMap not loaded</div>';
 
       const pointInfo = details ? details.pollutionPoint || {} : {}; // 修改点：增加 details 是否为 null 的判断
-      const pointName = isEstimation ? '估算点' : (pointInfo.stationName || '未知点位');
+      const pointName = isEstimation ? 'IDW估算点' : (pointInfo.stationName || '未知点位');
       const currentType = isEstimation ? this.currentLayerType : (pointInfo.pollutionType || 'unknown');
 
       let pollutantsHtml = '';
@@ -475,10 +478,6 @@ export default {
         cd: 'Cd',
         cr: 'Cr',
         ars: 'As',       // 后端是 ars
-        ap: 'AP',
-        hn: 'HN',
-        avs: '总As',    // 后端是 avs, 对应之前的 AS_total
-        k: 'K'
       };
       const airPollutantMap = {
         pm2_5: 'PM2.5', // 假设后端是 pm2_5
@@ -541,7 +540,7 @@ export default {
         </div>
         <div class="info-window-content" style="padding: 15px;">
           <div class="tab-pane active" data-pane="concentration">
-            <div style="font-weight: bold; margin-bottom: 8px;">${pointName} (${currentType})</div>
+            <div style="font-weight: bold; margin-bottom: 8px;">${pointName} </div>
             <div>经度：${position.lng.toFixed(6)}</div>
             <div>纬度：${position.lat.toFixed(6)}</div>
             ${isEstimation ? '' : ''} <!-- 原污染监测总值已移除 -->
@@ -740,6 +739,22 @@ export default {
     },
     goToDataMng() {
       this.$router.push('/DataManage');
+    },
+    goToDocument() {
+      window.open('/riskDocument');
+    },
+    handleTabClick(action) {
+      // 查找 tabs 数组中对应的项并更新 active 状态
+      this.tabs.forEach(tab => {
+        tab.active = tab.action === action;
+      });
+
+      // 执行对应的跳转方法
+      if (typeof this[action] === 'function') {
+        this[action]();
+      } else {
+        console.warn(`Action "${action}" is not a defined method.`);
+      }
     }
   }
 }
@@ -747,11 +762,8 @@ export default {
 
 <style scoped>
 .amap-wrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -759,11 +771,13 @@ export default {
 
 .nav-bar {
   width: 100%;
-  height: 60px; /* 改为固定高度 */
+  height: 100px; /* 增加高度以容纳两行 */
   position: relative;
   background-color: #2C7873;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   z-index: 100;
+  display: flex;
+  flex-direction: column;
 }
 .user-info {
   cursor: pointer;
@@ -771,24 +785,23 @@ export default {
   padding: 8px 16px;
   border-radius: 4px;
   transition: all 0.3s ease;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  position: relative;
 }
 .user-info:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 .amap-container {
-  position: absolute;
-  top: 0px; /* 对应导航栏固定高度 */
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
   width: 100%;
-  height: 100% ; /* 使用计算值 */
+  flex-grow: 1; /* 自动填充剩余空间 */
 }
 
 .layer-control {
   position: absolute;
   left: 20px;
-  top: 80px; /* 导航栏高度 + 间距 */
+  top: 120px; /* 增加top值以避开导航栏 */
   z-index: 100;
   background-color: #2C7873;
   border-radius: 12px;
@@ -797,20 +810,36 @@ export default {
   transition: all 0.3s ease;
 }
 
-/* 简化根元素样式 */
-:root, body {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+
+/* 第一行：标题行 */
+.title-row {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 20px;
 }
+
+.main-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+}
+
+/* 第二行：导航行 */
+.nav-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  margin-top: 5px; /* 增加顶部间隙 */
+}
+
 .nav-container {
-  height: 100%;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 100%;
   padding: 0 20px;
   max-width: 1400px;
   margin: 0 auto;
@@ -818,35 +847,38 @@ export default {
 
 .nav-tabs {
   display: flex;
-  gap: 10px;
-  margin-left: 0;
+  gap: 12px;
+  flex: 0 0 auto;
+  min-width: 0;
 }
 
 .tab {
-  padding: 6px 16px;
+  padding: 8px 16px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.3s ease;
   color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .tab:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .tab.active {
-  background-color: #52958B;
+  background-color: rgba(255, 255, 255, 0.3);
   color: white;
+  font-weight: bold;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
-.nav-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 20px;
-  font-weight: bold;
-  color: white;
-}
+
 .layer-buttons {
   display: flex;
   flex-direction: column;
@@ -880,13 +912,7 @@ export default {
   min-height: unset;
 }
 
-/* 确保整个页面不会出现滚动条 */
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  height: 100%;
-}
+
 
 /* 你可能需要为新的信息窗体标签页添加一些样式 */
 .custom-info-window .tab-item.active {

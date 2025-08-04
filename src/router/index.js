@@ -5,6 +5,7 @@ import PollutionPlot from '../components/PollutionPlot.vue'  // 添加导入
 import DataAdding from '@/components/DataAdding.vue'
 import UserRegister from '../components/UserRegister.vue'
 import DataManage from '../components/DataManage.vue'
+import RiskDocument from '../components/RiskDocument.vue'
 
 
 const routes = [
@@ -44,6 +45,11 @@ const routes = [
     path: '/register',
     name: 'Register',
     component: UserRegister
+  },
+  {
+    path: '/riskDocument',
+    name: 'RiskDocument',
+    component: RiskDocument
   },
 ]
 
